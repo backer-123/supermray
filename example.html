@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>超级马里奥网页游戏</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #6B8CFF;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin: 20px auto;
+            background-color: #6B8CFF;
+            border: 4px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        #game-screen {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #mario {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            bottom: 80px;
+            left: 50px;
+            background-color: red;
+            border-bottom: 10px solid #0000FF;
+            z-index: 10;
+        }
+        
+        .platform {
+            position: absolute;
+            height: 40px;
+            background-color: #8B4513;
+            border-top: 5px solid #A0522D;
+        }
+        
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background-color: #8B4513;
+            border-top: 5px solid #A0522D;
+        }
+        
+        .coin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            z-index: 5;
+        }
+        
+        .pipe {
+            position: absolute;
+            width: 60px;
+            height: 100px;
+            background-color: #00AA00;
+            border: 2px solid #008800;
+            border-top: none;
+            bottom: 80px;
+        }
+        
+        .pipe-top {
+            position: absolute;
+            width: 80px;
+            height: 20px;
+            background-color: #00AA00;
+            border: 2px solid #008800;
+            bottom: 180px;
+            margin-left: -10px;
+        }
+        
+        .brick {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #D2691E;
+            border: 2px solid #8B4513;
+        }
+        
+        .cloud {
+            position: absolute;
+            width: 100px;
+            height: 50px;
+            background-color: white;
+            border-radius: 20px;
+        }
+        
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #controls {
+            margin: 20px auto;
+            width: 800px;
+            text-align: center;
+        }
+        
+        button {
+            background-color: #E52521;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #8B0000;
+        }
+        
+        button:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-screen">
+            <div id="mario"></div>
+            <div id="ground"></div>
+            <div id="score">分数: 0</div>
+            
+            <!-- 管道 -->
+            <div class="pipe" style="left: 300px;">
+                <div class="pipe-top"></div>
+            </div>
+            <div class="pipe" style="left: 600px;">
+                <div class="pipe-top"></div>
+            </div>
+            
+            <!-- 平台 -->
+            <div class="platform" style="width: 200px; left: 150px; bottom: 200px;"></div>
+            <div class="platform" style="width: 150px; left: 400px; bottom: 300px;"></div>
+            
+            <!-- 金币 -->
+            <div class="coin" style="left: 200px; bottom: 250px;"></div>
+            <div class="coin" style="left: 250px; bottom: 250px;"></div>
+            <div class="coin" style="left: 450px; bottom: 350px;"></div>
+            <div class="coin" style="left: 500px; bottom: 350px;"></div>
+            
+            <!-- 砖块 -->
+            <div class="brick" style="left: 350px; bottom: 180px;"></div>
+            <div class="brick" style="left: 390px; bottom: 180px;"></div>
+            <div class="brick" style="left: 430px; bottom: 180px;"></div>
+            
+            <!-- 云朵 -->
+            <div class="cloud" style="left: 100px; top: 50px;"></div>
+            <div class="cloud" style="left: 350px; top: 80px;"></div>
+            <div class="cloud" style="left: 600px; top: 30px;"></div>
+        </div>
+    </div>
+    
+    <div id="controls">
+        <button id="left-btn">← 左移</button>
+        <button id="jump-btn">跳跃</button>
+        <button id="right-btn">右移 →</button>
+    </div>
+    
+    <script>
+        // 游戏变量
+        let score = 0;
+        let marioElement = document.getElementById('mario');
+        let scoreElement = document.getElementById('score');
+        let leftBtn = document.getElementById('left-btn');
+        let rightBtn = document.getElementById('right-btn');
+        let jumpBtn = document.getElementById('jump-btn');
+        
+        // 马里奥位置和物理属性
+        let marioPos = {
+            x: 50,
+            y: 80, // 底部距离
+            vx: 0,
+            vy: 0,
+            jumping: false
+        };
+        
+        // 按钮控制
+        leftBtn.addEventListener('mousedown', () => { marioPos.vx = -5; });
+        leftBtn.addEventListener('mouseup', () => { marioPos.vx = 0; });
+        rightBtn.addEventListener('mousedown', () => { marioPos.vx = 5; });
+        rightBtn.addEventListener('mouseup', () => { marioPos.vx = 0; });
+        jumpBtn.addEventListener('click', jump);
+        
+        // 键盘控制
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') marioPos.vx = -5;
+            if (e.key === 'ArrowRight') marioPos.vx = 5;
+            if (e.key === 'ArrowUp' || e.key === ' ') jump();
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') marioPos.vx = 0;
+        });
+        
+        function jump() {
+            if (!marioPos.jumping) {
+                marioPos.vy = 15;
+                marioPos.jumping = true;
+            }
+        }
+        
+        // 碰撞检测
+        function checkCollisions() {
+            // 地面碰撞
+            if (marioPos.y <= 80) {
+                marioPos.y = 80;
+                marioPos.vy = 0;
+                marioPos.jumping = false;
+            }
+            
+            // 检测与平台的碰撞
+            let platforms = document.getElementsByClassName('platform');
+            for (let platform of platforms) {
+                let rect = platform.getBoundingClientRect();
+                let marioRect = marioElement.getBoundingClientRect();
+                let gameRect = document.getElementById('game-screen').getBoundingClientRect();
+                
+                let relativeTop = rect.top - gameRect.top;
+                let relativeBottom = rect.bottom - gameRect.top;
+                let relativeLeft = rect.left - gameRect.left;
+                let relativeRight = rect.right - gameRect.left;
+                
+                if (marioPos.x + 40 > relativeLeft && marioPos.x < relativeRight && 
+                    500 - marioPos.y - 60 < relativeBottom && 
+                    500 - marioPos.y > relativeTop && marioPos.vy < 0) {
+                    marioPos.y = 500 - relativeTop;
+                    marioPos.vy = 0;
+                    marioPos.jumping = false;
+                }
+            }
+            
+            // 收集金币
+            let coins = document.getElementsByClassName('coin');
+            for (let i = coins.length - 1; i >= 0; i--) {
+                let coin = coins[i];
+                let rect = coin.getBoundingClientRect();
+                let marioRect = marioElement.getBoundingClientRect();
+                
+                if (marioRect.right > rect.left && 
+                    marioRect.left < rect.right &&
+                    marioRect.bottom > rect.top &&
+                    marioRect.top < rect.bottom) {
+                    coin.remove();
+                    score += 10;
+                    scoreElement.textContent = '分数: ' + score;
+                }
+            }
+        }
+        
+        // 游戏主循环
+        function gameLoop() {
+            // 更新位置
+            marioPos.x += marioPos.vx;
+            marioPos.y += marioPos.vy;
+            
+            // 重力
+            if (marioPos.jumping) {
+                marioPos.vy -= 0.5;
+            }
+            
+            // 边界检查
+            if (marioPos.x < 0) marioPos.x = 0;
+            if (marioPos.x > 760) marioPos.x = 760;
+            
+            // 应用位置
+            marioElement.style.left = marioPos.x + 'px';
+            marioElement.style.bottom = marioPos.y + 'px';
+            
+            // 碰撞检测
+            checkCollisions();
+            
+            // 继续循环
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 开始游戏
+        gameLoop();
+    </script>
+</body>
+</html>
